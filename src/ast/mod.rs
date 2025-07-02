@@ -3,7 +3,7 @@ use crate::traits::{LispCallable};
 use std::fmt;
 
 // Values handled in Lisp
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub enum LispValue {
     Number(f64),
     Symbol(String),
@@ -11,8 +11,8 @@ pub enum LispValue {
     Function(Rc<dyn LispCallable>),
     // Macro(Rc<dyn LispMacro>),
     Bool(bool),
+    String(String),
     Nil,
-    // String(String),
     // Vector(Vec<LispValue>),
     // Map(HashMap<String, LispValue>),
 }
@@ -32,6 +32,7 @@ impl fmt::Debug for LispValue {
             LispValue::Function(_) => write!(f, "Function"),
             // LispValue::Macro(_) => write!(f, "Macro"),
             LispValue::Bool(b) => write!(f, "Bool({})", b),
+            LispValue::String(s) => write!(f, "String({})", s),
             LispValue::Nil => write!(f, "Nil"),
         }
     }
@@ -49,7 +50,24 @@ impl fmt::Display for LispValue {
             LispValue::Function(_) => write!(f, "<function>"),
             // LispValue::Macro(_) => write!(f, "<macro>"),
             LispValue::Bool(b) => write!(f, "{}", b),
+            LispValue::String(s) => write!(f, "\"{}\"", s),
             LispValue::Nil => write!(f, "nil"),
+        }
+    }
+}
+
+impl PartialEq for LispValue {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (LispValue::Number(a), LispValue::Number(b)) => a == b,
+            (LispValue::Symbol(a), LispValue::Symbol(b)) => a == b,
+            (LispValue::List(a), LispValue::List(b)) => a == b,
+            (LispValue::Bool(a), LispValue::Bool(b)) => a == b,
+            (LispValue::String(a), LispValue::String(b)) => a == b,
+            (LispValue::Nil, LispValue::Nil) => true,
+            // (LispValue::Function(a), LispValue::Function(b)) => Rc::ptr_eq(a, b),
+            (LispValue::Function(_), LispValue::Function(_)) => false,
+            _ => false,
         }
     }
 }
@@ -80,6 +98,13 @@ mod tests {
     fn test_nil() {
         let nil = LispValue::Nil;
         assert_eq!(format!("{}", nil), "nil");
+    }
+
+    #[test]
+    fn test_string_value() {
+        let s = LispValue::String("hello".to_string());
+        assert_eq!(format!("{}", s), "\"hello\"");
+        assert_eq!(s, LispValue::String("hello".to_string()));
     }
 }
 
